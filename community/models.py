@@ -23,17 +23,27 @@ class ArticlePost(models.Model):
     title = models.CharField(max_length=64)
     content = models.TextField(max_length=1024,null=True,blank=True)
     address = models.CharField(choices=ADDRESS_TYPE_CHOICES,max_length=16)
-    likes = models.IntegerField(default=0)
     comments = models.IntegerField(default=0)
     created_time = models.DateTimeField(auto_now=True)
 
 class Comment(models.Model):
     article = models.ForeignKey("ArticlePost",on_delete=models.CASCADE)
-    user = models.ForeignKey('User',on_delete=models.CASCADE)
+    #user = models.ForeignKey('User',on_delete=models.CASCADE)
+    poster = models.CharField(max_length=32,default=0)
     comment = models.TextField(max_length=1024)
     created_time = models.TimeField(auto_now=True)
-    father_comment = models.CharField(max_length=16,default=0)
+    father = models.CharField(max_length=16,default=0)
+    likes = models.IntegerField(default=0)
 
-class Img(models.Model):
+class Like(models.Model):
+    comment = models.ForeignKey("Comment",on_delete=models.CASCADE)
+    user = models.CharField(max_length=16)
+
+class ImgToArticle(models.Model):
     article = models.ForeignKey('ArticlePost',on_delete=models.CASCADE)
     img = models.ImageField(upload_to="img")
+
+class ImgToComment(models.Model):
+    comment = models.ForeignKey('Comment', on_delete=models.CASCADE)
+    img = models.ImageField(upload_to="img")
+
