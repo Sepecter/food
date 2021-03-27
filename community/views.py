@@ -12,8 +12,7 @@ import json
 class Article(APIView):
 
     def get(self, request):
-        ret = {}
-        ret['article'] = []
+        ret = {'article': []}
         address = request.GET.get('address')
         list = models.ArticlePost.objects.filter(address=address)
         for var in list:
@@ -54,14 +53,14 @@ class Article(APIView):
         ret['code'] = ''
         return JsonResponse(ret)
 
+
 class Comment(APIView):
 
-    def get(self,request):
-        ret = {}
-        ret['comment'] = []
-        artilce = request.POST.get('article')
-        list = models.Comment.objects.filter(article_id=artilce)
-        for var in list:
+    def get(self, request):
+        ret = {'comment': []}
+        article = request.POST.get('article')
+        tmp_list = models.Comment.objects.filter(article_id=article)
+        for var in tmp_list:
             obj = {
                 'poster': var.poster,
                 'comment': var.comment,
@@ -78,7 +77,7 @@ class Comment(APIView):
         ret['code'] = ''
         return JsonResponse(ret)
 
-    def post(self,request):
+    def post(self, request):
         ret = {}
         article = request.POST.get('article')
         poster = request.POST.get('poster')
@@ -106,38 +105,39 @@ class Comment(APIView):
         ret['code'] = ''
         return JsonResponse(ret)
 
+
 class Like(APIView):
 
-    def get(self,request):
+    def get(self, request):
         ret = {}
-        id = request.GET.get('id')
+        comment_id = request.GET.get('id')
         user = request.GET.get('user')
-        obj = models.Like.objects.filter(comment_id=id,user=user)
-        ret['reuslt'] = '0'
+        obj = models.Like.objects.filter(comment_id=comment_id, user=user)
+        ret['result'] = '0'
         if obj:
-            ret['reuslt'] = 1
+            ret['result'] = 1
         return JsonResponse(ret)
 
-    def post(self,request):
+    def post(self, request):
         ret = {}
-        user = request.POST.get('uesr')
+        user = request.POST.get('user')
         id = request.GET.get('id')
         like = models.Like()
         like.comment_id = id
         like.user = user
         like.save()
         comment = like.comment
-        comment.likes = comment.likes+1
+        comment.likes = comment.likes + 1
         comment.save()
         ret['code'] = ''
         return JsonResponse(ret)
 
-    def delete(self,request):
+    def delete(self, request):
         ret = {}
-        user = request.POST.get('uesr')
+        user = request.POST.get('user')
         id = request.GET.get('id')
         comment = models.Comment.objects.get(id=id)
         comment.likes = comment.likes - 1
         comment.save()
-        models.Like.objects.filter(comment_id=id,user=user).delete()
+        models.Like.objects.filter(comment_id=id, user=user).delete()
         return JsonResponse(ret)
