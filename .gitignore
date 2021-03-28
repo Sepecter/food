@@ -1,0 +1,12 @@
+# python虚拟环境
+venv/
+# pycharm工作目录
+.idea/
+# python缓存
+__pycache__/
+# 启动脚本
+start.sh
+# 日志目录
+/logs
+# 数据库文件
+*.sqlite3
