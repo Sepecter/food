@@ -21,6 +21,7 @@ class Article(APIView):
                 'poster': var.poster,
                 'title': var.title,
                 'content': var.content,
+                'stars': var.stars,
                 'address': var.address,
                 'comment': var.comments,
                 'time': var.created_time,
@@ -53,6 +54,38 @@ class Article(APIView):
         ret['code'] = ''
         return JsonResponse(ret)
 
+class UserInfo(APIView):
+
+    def get(self, request):
+        user_id = request.GET.get('id')
+        user = models.User.objects.filter(id=user_id).first()
+        ret = {
+            'username' : user.username,
+            'avatar' : str(user.avatar),
+            'usertype' : user.usertype,
+        }
+        return JsonResponse(ret)
+
+class UserLike(APIView):
+
+    def get(self, request):
+        ret={'comment': []}
+        user_id = request.GET.get('id')
+        comment = models.Like.objects.filter(user=user_id)
+        for i in comment:
+            ret['comment'].append(i.comment_id)
+        return JsonResponse(ret)
+
+
+class UserStar(APIView):
+
+    def get(self, request):
+        ret = {'article': []}
+        user_id = request.GET.get('id')
+        article_star = models.Star.objects.filter(user=user_id)
+        for i in article_star:
+            ret['article'].append(i.article_id)
+        return JsonResponse(ret)
 
 class Comment(APIView):
 
@@ -76,6 +109,7 @@ class Comment(APIView):
 
         ret['code'] = ''
         return JsonResponse(ret)
+
 
     def post(self, request):
         ret = {}
@@ -106,6 +140,43 @@ class Comment(APIView):
         return JsonResponse(ret)
 
 
+
+class Star(APIView):
+
+    def get(self, request):
+        ret = {}
+        article_id = request.GET.get('id')
+        user = request.GET.get('user')
+        obj = models.Star.objects.filter(article_id=article_id, user=user)
+        ret['result'] = '0'
+        if obj:
+            ret['result'] = 1
+        return JsonResponse(ret)
+
+    def post(self, request):
+        ret = {}
+        user = request.GET.get('user')
+        article_id = request.GET.get('id')
+        star = models.Star()
+        star.article_id = article_id
+        star.user = user
+        star.save()
+        article = star.article
+        article.stars = article.stars + 1
+        article.save()
+        ret['code'] = ''
+        return JsonResponse(ret)
+
+    def delete(self, request):
+        ret = {}
+        user = request.GET.get('user')
+        article_id = request.GET.get('id')
+        article = models.ArticlePost.objects.get(id=article_id)
+        article.likes = article.stars - 1
+        article.save()
+        models.Star.objects.filter(article_id=article_id, user=user).delete()
+        return JsonResponse(ret)
+
 class Like(APIView):
 
     def get(self, request):
@@ -120,10 +191,10 @@ class Like(APIView):
 
     def post(self, request):
         ret = {}
-        user = request.POST.get('user')
-        id = request.GET.get('id')
+        user = request.GET.get('user')
+        comment_id = request.GET.get('id')
         like = models.Like()
-        like.comment_id = id
+        like.comment_id = comment_id
         like.user = user
         like.save()
         comment = like.comment
@@ -134,10 +205,10 @@ class Like(APIView):
 
     def delete(self, request):
         ret = {}
-        user = request.POST.get('user')
-        id = request.GET.get('id')
-        comment = models.Comment.objects.get(id=id)
+        user = request.GET.get('user')
+        comment_id = request.GET.get('id')
+        comment = models.Comment.objects.get(id=comment_id)
         comment.likes = comment.likes - 1
         comment.save()
-        models.Like.objects.filter(comment_id=id, user=user).delete()
+        models.Like.objects.filter(comment_id=comment_id, user=user).delete()
         return JsonResponse(ret)

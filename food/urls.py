@@ -23,7 +23,12 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path(r'article', views.Article.as_view()),
     path(r'comment', views.Comment.as_view()),
+    path(r'userStar', views.UserStar.as_view()),
+    path(r'userLike', views.UserLike.as_view()),
+    path(r'userInfo', views.UserInfo.as_view()),
     path(r'like', views.Like.as_view()),
+    path(r'star', views.Star.as_view()),
+
 ]
 
 urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
