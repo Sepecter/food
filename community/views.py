@@ -14,19 +14,25 @@ class Article(APIView):
     def get(self, request):
         ret = {'article': []}
         address = request.GET.get('address')
-        list = models.ArticlePost.objects.filter(address=address)
-        for var in list:
+        article_id = request.GET.get('id')
+        article_list = []
+        if address:
+            article_list = models.ArticlePost.objects.filter(address=address)
+        elif article_id:
+            article_list = models.ArticlePost.objects.filter(id=article_id)
+        for i in article_list:
             obj = {
-                'id': var.id,
-                'poster': var.poster,
-                'title': var.title,
-                'content': var.content,
-                'stars': var.stars,
-                'address': var.address,
-                'comment': var.comments,
-                'time': var.created_time,
+                'id': i.id,
+                'poster': i.poster,
+                'title': i.title,
+                'content': i.content,
+                'likes' : i.likes,
+                'stars': i.stars,
+                'address': i.address,
+                'comment': i.comments,
+                'time': i.created_time,
             }
-            imgs = var.imgtoarticle_set.all()
+            imgs = i.imgtoarticle_set.all()
             obj['img'] = []
             for img in imgs:
                 obj['img'].append(str(img.img))
@@ -69,11 +75,15 @@ class UserInfo(APIView):
 class UserLike(APIView):
 
     def get(self, request):
-        ret={'comment': []}
+        ret = {'comment': []}
+        ret = {'article': []}
         user_id = request.GET.get('id')
-        comment = models.Like.objects.filter(user=user_id)
+        comment = models.LikeToComment.objects.filter(user=user_id)
         for i in comment:
             ret['comment'].append(i.comment_id)
+        article = models.LikeToArticle.objects.filter(user=user_id)
+        for i in article:
+            ret['article'].append(i.article_id)
         return JsonResponse(ret)
 
 
@@ -93,15 +103,15 @@ class Comment(APIView):
         ret = {'comment': []}
         article = request.POST.get('article')
         tmp_list = models.Comment.objects.filter(article_id=article)
-        for var in tmp_list:
+        for i in tmp_list:
             obj = {
-                'poster': var.poster,
-                'comment': var.comment,
-                'father': var.father,
-                'time': var.created_time,
-                'likes': var.likes
+                'poster': i.poster,
+                'comment': i.comment,
+                'father': i.father,
+                'time': i.created_time,
+                'likes': i.likes
             }
-            imgs = var.imgtocomment_set.all()
+            imgs = i.imgtocomment_set.all()
             obj['img'] = []
             for img in imgs:
                 obj['img'].append(img.img)
@@ -138,8 +148,6 @@ class Comment(APIView):
                     f.write(content)
         ret['code'] = ''
         return JsonResponse(ret)
-
-
 
 class Star(APIView):
 
@@ -181,9 +189,13 @@ class Like(APIView):
 
     def get(self, request):
         ret = {}
-        comment_id = request.GET.get('id')
+        like_type = request.GET.get('type')
+        object_id = request.GET.get('id')
         user = request.GET.get('user')
-        obj = models.Like.objects.filter(comment_id=comment_id, user=user)
+        if like_type == 1:
+            obj = models.LikeToArticle.objects.filter(article_id=object_id, user=user)
+        else :
+            obj = models.LikeToComment.objects.filter(comment_id=object_id, user=user)
         ret['result'] = '0'
         if obj:
             ret['result'] = 1
@@ -192,23 +204,40 @@ class Like(APIView):
     def post(self, request):
         ret = {}
         user = request.GET.get('user')
-        comment_id = request.GET.get('id')
-        like = models.Like()
-        like.comment_id = comment_id
-        like.user = user
-        like.save()
-        comment = like.comment
-        comment.likes = comment.likes + 1
-        comment.save()
+        object_id = request.GET.get('id')
+        like_type = request.GET.get('type')
+        if like_type == 1:
+            like = models.LikeToComment()
+            like.comment_id = object_id
+            like.user = user
+            like.save()
+            comment = like.comment
+            comment.likes = comment.likes + 1
+            comment.save()
+        else :
+            like = models.LikeToArticle()
+            like.article_id = object_id
+            like.user = user
+            like.save()
+            article = like.article
+            article.likes = article.likes + 1
+            article.save()
         ret['code'] = ''
         return JsonResponse(ret)
 
     def delete(self, request):
         ret = {}
         user = request.GET.get('user')
-        comment_id = request.GET.get('id')
-        comment = models.Comment.objects.get(id=comment_id)
-        comment.likes = comment.likes - 1
-        comment.save()
-        models.Like.objects.filter(comment_id=comment_id, user=user).delete()
+        object_id = request.GET.get('id')
+        like_type = request.GET.get('type')
+        if like_type == 1:
+            comment = models.Comment.objects.get(id=object_id)
+            comment.likes = comment.likes - 1
+            comment.save()
+            models.LikeToComment.objects.filter(comment_id=object_id, user=user).delete()
+        else :
+            article = models.ArticlePost.objects.get(id=object_id)
+            article.likes = article.likes - 1
+            article.save()
+            models.LikeToComment.objects.filter(comment_id=object_id, user=user).delete()
         return JsonResponse(ret)

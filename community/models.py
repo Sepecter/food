@@ -3,6 +3,7 @@
 
 from django.db import models
 
+
 class User(models.Model):
     USER_TYPE_CHOICES = (
         (1,'student'),
@@ -21,10 +22,12 @@ class ArticlePost(models.Model):
     poster = models.CharField(max_length=32)
     title = models.CharField(max_length=64)
     content = models.TextField(max_length=1024,null=True,blank=True)
+    likes = models.IntegerField(default=0)
     stars = models.IntegerField(default=0)
     address = models.CharField(choices=ADDRESS_TYPE_CHOICES,max_length=16)
     comments = models.IntegerField(default=0)
     created_time = models.DateTimeField(auto_now=True)
+
 
 class Comment(models.Model):
     article = models.ForeignKey("ArticlePost",on_delete=models.CASCADE)
@@ -35,17 +38,25 @@ class Comment(models.Model):
     likes = models.IntegerField(default=0)
 
 
-class Like(models.Model):
+class LikeToComment(models.Model):
     comment = models.ForeignKey("Comment",on_delete=models.CASCADE)
     user = models.CharField(max_length=16)
+
+
+class LikeToArticle(models.Model):
+    article = models.ForeignKey("ArticlePost",on_delete=models.CASCADE)
+    user = models.CharField(max_length=16)
+
 
 class Star(models.Model):
     article = models.ForeignKey("ArticlePost", on_delete=models.CASCADE)
     user = models.CharField(max_length=16)
 
+
 class ImgToArticle(models.Model):
     article = models.ForeignKey('ArticlePost',on_delete=models.CASCADE)
     img = models.ImageField(upload_to="img")
+
 
 class ImgToComment(models.Model):
     comment = models.ForeignKey('Comment', on_delete=models.CASCADE)
